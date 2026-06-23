@@ -201,8 +201,7 @@ def dimensiongen(avar: float = 0.10, mar: float = 1.5):
     _rooms = updated_rooms
     
     saved_dimensions = data["saved_dimensions"]
-    print(f"Generated dimensions for {len(saved_dimensions)} rooms.")
-    print(f"Dimensions details: {saved_dimensions}")
+    print(f"Generated optimal dimensions for {len(saved_dimensions)} rooms.")
     return saved_dimensions
 
 
