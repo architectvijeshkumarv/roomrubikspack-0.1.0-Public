@@ -40,12 +40,21 @@ def init():
 
 
 def room(id: str, name: str = "", **kwargs):
-    """Adds a room to the session and prints a success message with details."""
+    """Adds a room to the session (or updates if ID exists) and prints a success message."""
     global _rooms
     new_room = Room(id=id, name=name, **kwargs)
-    _rooms.append(new_room)
+    
     details = f"Area: {new_room.area} " if new_room.area else f"Size: {new_room.w}x{new_room.h} "
     start_space_msg = " (Start Space)" if new_room.startSpace else ""
+    
+    # Replace if exists
+    for i, existing in enumerate(_rooms):
+        if existing.id == id:
+            _rooms[i] = new_room
+            print(f"Updated existing room: {new_room.name} ({new_room.id}) - {details}{start_space_msg}")
+            return new_room
+            
+    _rooms.append(new_room)
     print(f"Added room successfully: {new_room.name} ({new_room.id}) - {details}{start_space_msg}")
     return new_room
 
@@ -55,7 +64,9 @@ def connectivity(*conn_pairs: Tuple[str, str]):
     global _connections, _rooms
     
     for pair in conn_pairs:
-        _connections.append(Connection(roomA=pair[0], roomB=pair[1]))
+        exists = any((c.roomA == pair[0] and c.roomB == pair[1]) or (c.roomA == pair[1] and c.roomB == pair[0]) for c in _connections)
+        if not exists:
+            _connections.append(Connection(roomA=pair[0], roomB=pair[1]))
         
     start_spaces = [r for r in _rooms if r.startSpace]
     
