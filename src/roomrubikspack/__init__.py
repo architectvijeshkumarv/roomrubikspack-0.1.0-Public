@@ -265,6 +265,12 @@ def generatelayout(lvar: float = 0.5, sgap: float = 1.0, max_variations: int = 1
         print("Failed to generate layouts.")
     else:
         print(f"Successfully generated {len(variations)} unique variations.")
+        
+    # Print the server's status/fitting report
+    status_report = data.get("status_report", "")
+    if status_report:
+        print(f"Server Status: {status_report}")
+        
     return variations
 
 
