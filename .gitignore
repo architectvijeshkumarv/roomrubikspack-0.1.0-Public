@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv
+env/
+venv/
+.env
+.eggs/
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+output_layout.dxf
+output_layout.json
+layout_var*.dxf
+layout_var*.json
