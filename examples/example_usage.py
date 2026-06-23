@@ -5,8 +5,9 @@ def main():
     rr.init()
 
     # 2. Set global settings and local/remote server endpoint
-    # The solver server defaults to your live Cloud Run URL if not specified.
-    rr.settings(unit="m", server_url="https://roomrubikspack-0-1-0-private-942524616275.asia-south1.run.app")
+    import os
+    url = os.getenv("ROOMRUBIKSPACK_SERVER_URL", "https://roomrubikspack-0-1-0-private-942524616275.asia-south1.run.app")
+    rr.settings(unit="m", server_url=url)
 
     # 3. View or modify the construction grid (used by dimension generation)
     # The grid uses standard architectural modules. You can add or remove values.
