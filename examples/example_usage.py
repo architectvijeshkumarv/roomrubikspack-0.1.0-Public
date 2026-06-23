@@ -1,9 +1,10 @@
 import roomrubikspack as rr
 
 def main():
-    # Initialization and server endpoint are configured by default in the package
+    # 1. (Optional) Set the measurement unit to meters ('m') or feet ('f')
+    rr.settings(unit="m")
 
-    # 3. View or modify the construction grid (used by dimension generation)
+    # 2. View or modify the construction grid (used by dimension generation)
     # The grid uses standard architectural modules. You can add or remove values.
     rr.constructiongrid(add=5.0)
     rr.constructiongrid(remove=9.0)
