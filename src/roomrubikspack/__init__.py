@@ -212,12 +212,16 @@ def generatelayout(lvar: float = 0.5, sgap: float = 1.0, max_variations: int = 1
     
     from .utils.constraints import _global_constraints
     
+    # Add grid sizes to settings so server can explore dimensions
+    gen_settings = _settings.copy()
+    gen_settings["base_grid_sizes"] = _base_grid_sizes
+    
     payload = {
         "rooms": [dataclasses.asdict(r) for r in _rooms],
         "connections": [dataclasses.asdict(c) for c in _connections],
         "constraints": _global_constraints,
         "site": dataclasses.asdict(_site) if _site is not None else None,
-        "settings": _settings,
+        "settings": gen_settings,
         "location_variation": lvar,
         "allowed_space_gap": sgap,
         "max_variations": max_variations
