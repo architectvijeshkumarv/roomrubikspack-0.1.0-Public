@@ -4,7 +4,7 @@ import dataclasses
 import requests
 import os
 
-from .types import Room, Connection, Site, Door, Window, Furniture
+from .types import Room, Connection, Site
 from .utils.graph_utils import check_planarity
 from .utils.constraints import add_constraint, clear_constraints
 
@@ -21,43 +21,10 @@ _settings: Dict[str, str] = {"unit": "m"}
 _server_url: str = os.getenv("ROOMRUBIKSPACK_SERVER_URL", "https://roomrubikspack-0-1-0-private-942524616275.asia-south1.run.app").rstrip('/')
 
 
-def deserialize_door(d: Dict[str, Any]) -> Door:
-    valid_fields = {f.name for f in dataclasses.fields(Door)}
-    filtered_data = {k: v for k, v in d.items() if k in valid_fields}
-    return Door(**filtered_data)
-
-
-def deserialize_window(w: Dict[str, Any]) -> Window:
-    valid_fields = {f.name for f in dataclasses.fields(Window)}
-    filtered_data = {k: v for k, v in w.items() if k in valid_fields}
-    return Window(**filtered_data)
-
-
-def deserialize_furniture(f: Dict[str, Any]) -> Furniture:
-    valid_fields = {f.name for f in dataclasses.fields(Furniture)}
-    filtered_data = {k: v for k, v in f.items() if k in valid_fields}
-    return Furniture(**filtered_data)
-
-
 def deserialize_room(r: Dict[str, Any]) -> Room:
-    # Separate nested complex structures
-    doors_data = r.pop("doors", []) or []
-    windows_data = r.pop("windows", []) or []
-    furniture_data = r.pop("furniture", []) or []
-    
-    doors = [deserialize_door(d) for d in doors_data if isinstance(d, dict)]
-    windows = [deserialize_window(w) for w in windows_data if isinstance(w, dict)]
-    furniture = [deserialize_furniture(f) for f in furniture_data if isinstance(f, dict)]
-    
-    # Filter flat dictionary to match dataclass fields
     valid_fields = {f.name for f in dataclasses.fields(Room)}
     filtered_data = {k: v for k, v in r.items() if k in valid_fields}
-    
-    room_obj = Room(**filtered_data)
-    room_obj.doors = doors
-    room_obj.windows = windows
-    room_obj.furniture = furniture
-    return room_obj
+    return Room(**filtered_data)
 
 
 def init():
