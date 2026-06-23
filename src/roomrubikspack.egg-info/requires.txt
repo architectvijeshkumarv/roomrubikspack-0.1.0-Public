@@ -1,0 +1,8 @@
+requests>=2.25.0
+matplotlib>=3.5.0
+networkx>=2.6.0
+ezdxf>=1.0.0
+
+[dev]
+pytest>=7.0
+pytest-cov>=4.0
