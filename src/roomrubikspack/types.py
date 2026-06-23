@@ -26,8 +26,6 @@ class Room:
     attached: bool = False                      # True = placed inside/onto a parent room
     startSpace: bool = False                    # True = entry point; exactly one room must be True
     attachedSpace: bool = False                 # True = user-declared dependent room (e.g. en-suite)
-    isCorridor: Optional[bool] = False          # True = corridor strip (auto-created by layout engine)
-    wallPresent: Optional[bool] = True          # False = room boundary is open (no wall drawn)
 
 
 @dataclass

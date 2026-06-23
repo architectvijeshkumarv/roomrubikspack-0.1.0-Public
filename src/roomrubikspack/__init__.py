@@ -224,14 +224,18 @@ def generatelayout(lvar: float = 0.5, sgap: float = 1.0, max_variations: int = 1
         
     variations = []
     for var_dict in data["variations"]:
-        var_rooms = [deserialize_room(rm_dict) for rm_dict in var_dict]
-        variations.append(var_rooms)
+        var_rooms = [deserialize_room(rm_dict) for rm_dict in var_dict["layout"]]
+        variations.append({"layout": var_rooms, "score": var_dict["score"]})
         
     _layout_variations = variations
     if not variations:
         print("Failed to generate layouts.")
     else:
-        print(f"Successfully generated {len(variations)} unique variations.")
+        print(f"Successfully generated {len(variations)} unique variations (ranked best to worst).")
+        for i, var in enumerate(variations):
+            var_rooms = var["layout"]
+            total_area = sum(round(r.w * r.h, 1) if r.w and r.h else 0.0 for r in var_rooms)
+            print(f"Rank {i+1} Variation - Score: {round(var['score'], 1)} - Total Area: {round(total_area, 1)} m²")
         
     # Print the server's status/fitting report
     status_report = data.get("status_report", "")
@@ -248,7 +252,8 @@ def showlayout(n: int = 1, label: Optional[List[str]] = None):
         print(f"Variation {n} does not exist. Available variations: {len(_layout_variations)}")
         return
         
-    layout = _layout_variations[n - 1]
+    layout = _layout_variations[n - 1]["layout"]
+    score = _layout_variations[n - 1]["score"]
     
     try:
         import matplotlib.pyplot as plt
@@ -268,32 +273,34 @@ def showlayout(n: int = 1, label: Optional[List[str]] = None):
     if label is None:
         label = ["name"]
         
+    total_area = 0.0
     for r in layout:
-        is_corr = getattr(r, 'isCorridor', False)
-        color = '#e2e8f0' if is_corr else getattr(r, 'color', '#ffffff')
+        color = getattr(r, 'color', '#ffffff')
         rect = patches.Rectangle((r.x, r.y), r.w, r.h, linewidth=1, edgecolor='black', facecolor=color, alpha=0.8)
         ax.add_patch(rect)
-        if not is_corr:
-            label_parts = []
-            unit_str = "m" if _settings["unit"] == "m" else "ft"
-            sq_unit_str = "sq.m" if _settings["unit"] == "m" else "sq.ft"
-            
-            if "name" in label:
-                label_parts.append(r.name or r.id)
-            if "id" in label:
-                label_parts.append(r.id)
-            if "dim" in label:
-                label_parts.append(f"{r.w}x{r.h}{unit_str}")
-            if "area" in label:
-                calc_area = round(r.w * r.h, 1)
-                label_parts.append(f"{calc_area} {sq_unit_str}")
-            
-            text_str = "\n".join(label_parts)
-            ax.text(r.x + r.w/2, r.y + r.h/2, text_str, ha='center', va='center', fontsize=8)
+        label_parts = []
+        unit_str = "m" if _settings["unit"] == "m" else "ft"
+        sq_unit_str = "sq.m" if _settings["unit"] == "m" else "sq.ft"
+        
+        calc_area = round(r.w * r.h, 1) if r.w and r.h else 0.0
+        total_area += calc_area
+        
+        if "name" in label:
+            label_parts.append(r.name or r.id)
+        if "id" in label:
+            label_parts.append(r.id)
+        if "dim" in label:
+            label_parts.append(f"{r.w}x{r.h}{unit_str}")
+        if "area" in label:
+            label_parts.append(f"{calc_area} {sq_unit_str}")
+        
+        text_str = "\n".join(label_parts)
+        ax.text(r.x + r.w/2, r.y + r.h/2, text_str, ha='center', va='center', fontsize=8)
 
     ax.autoscale()
     plt.gca().set_aspect('equal', adjustable='box')
-    plt.title(f"Layout Variation {n}")
+    plt.title(f"Rank {n} Variation (Score: {round(score, 1)})")
+    fig.text(0.5, 0.02, f"Total Area = {round(total_area, 1)} {sq_unit_str}", ha='center', fontsize=10, fontweight='bold')
     plt.show(block=False)
 
 
@@ -304,20 +311,20 @@ def exportlayout(n: int = 1, filepath: str = "layout.json"):
         print(f"Variation {n} does not exist.")
         return
         
-    layout = _layout_variations[n - 1]
+    layout = _layout_variations[n - 1]["layout"]
     
     if filepath.lower().endswith(".json"):
         data = []
         for r in layout:
-            data.append({
-                "id": r.id,
-                "name": getattr(r, 'name', ''),
-                "isCorridor": getattr(r, 'isCorridor', False),
-                "x": r.x,
-                "y": r.y,
-                "w": r.w,
-                "h": r.h
-            })
+            r_dict = dataclasses.asdict(r)
+            if r.x is not None and r.y is not None and r.w is not None and r.h is not None:
+                r_dict["points"] = [
+                    {"x": round(r.x, 2), "y": round(r.y, 2)}, 
+                    {"x": round(r.x + r.w, 2), "y": round(r.y, 2)}, 
+                    {"x": round(r.x + r.w, 2), "y": round(r.y + r.h, 2)}, 
+                    {"x": round(r.x, 2), "y": round(r.y + r.h, 2)}
+                ]
+            data.append(r_dict)
         with open(filepath, 'w') as f:
             json.dump(data, f, indent=2)
         print(f"Exported variation {n} to {os.path.abspath(filepath)}")
@@ -334,8 +341,7 @@ def exportlayout(n: int = 1, filepath: str = "layout.json"):
         for r in layout:
             pts = [(r.x, r.y), (r.x + r.w, r.y), (r.x + r.w, r.y + r.h), (r.x, r.y + r.h)]
             msp.add_lwpolyline(pts, close=True)
-            if not getattr(r, 'isCorridor', False):
-                msp.add_text(r.name or r.id, dxfattribs={'height': 0.2}).set_placement((r.x + r.w/2, r.y + r.h/2))
+            msp.add_text(r.name or r.id, dxfattribs={'height': 0.2}).set_placement((r.x + r.w/2, r.y + r.h/2))
                 
         doc.saveas(filepath)
         print(f"Exported variation {n} to {os.path.abspath(filepath)}")

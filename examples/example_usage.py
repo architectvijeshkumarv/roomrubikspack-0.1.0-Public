@@ -6,7 +6,7 @@ def main():
 
     # 2. Set global settings and local/remote server endpoint
     import os
-    url = os.getenv("ROOMRUBIKSPACK_SERVER_URL", "https://roomrubikspack-0-1-0-private-942524616275.asia-south1.run.app")
+    url = os.getenv("ROOMRUBIKSPACK_SERVER_URL", "http://localhost:8000")
     rr.settings(unit="m", server_url=url)
 
     # 3. View or modify the construction grid (used by dimension generation)
@@ -23,7 +23,7 @@ def main():
     rr.room("bath1",    "Attached Bath", area=4.0, attachedSpace=True, color="#e6f2ff")
 
     # (Optional) Define a site boundary
-    rr.site([{"x": -2, "y": -2}, {"x": 22, "y": -2}, {"x": 22, "y": 22}, {"x": -2, "y": 22}])
+    rr.site([{"x": 0, "y": 0}, {"x": 10, "y": 0}, {"x": 10, "y": 10}, {"x": 0, "y": 10}])
 
     # 5. Add Connectivity (Adjacency requirements)
     rr.connectivity(
@@ -54,7 +54,7 @@ def main():
     rr.exportlayout(n=1, filepath="output_layout.dxf")
 
     # Wait for the user to close all plots before exiting the script
-    rr.wait_for_plots()
+    # rr.wait_for_plots()
 
 if __name__ == "__main__":
     main()
