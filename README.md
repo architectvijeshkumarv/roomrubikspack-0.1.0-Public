@@ -131,3 +131,26 @@ rr.wait_for_plots()
 - `rr.showlayout(n, label)`: Plots the `n`-th generated variation using Matplotlib.
 - `rr.exportlayout(n, filepath)`: Saves the `n`-th layout to JSON or DXF.
 - `rr.wait_for_plots()`: Helper to keep visual plots open.
+
+---
+
+## Citation
+
+If you use RoomRubiks in your academic or professional work, please cite the following paper:
+
+**APA:**
+Valiyappurakkal, V. K. (2026). RoomRubiks: An Application for Floor Layout Generation Using a Nonfragmented Rectangular Approach. *Journal of Architectural Engineering*, 32(3). https://doi.org/10.1061/JAEIED.AEENG-2207
+
+**BibTeX:**
+```bibtex
+@article{Valiyappurakkal2026RoomRubiks,
+  author  = {Valiyappurakkal, Vijesh Kumar},
+  title   = {RoomRubiks: An Application for Floor Layout Generation Using a Nonfragmented Rectangular Approach},
+  journal = {Journal of Architectural Engineering},
+  year    = {2026},
+  volume  = {32},
+  number  = {3},
+  doi     = {10.1061/JAEIED.AEENG-2207},
+  url     = {https://doi.org/10.1061/JAEIED.AEENG-2207}
+}
+```
