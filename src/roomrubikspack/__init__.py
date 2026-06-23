@@ -17,8 +17,8 @@ _DEFAULT_GRID_SIZES: List[float] = [1.2, 1.5, 1.8, 2.1, 2.4, 3.0, 4.5, 6.0, 7.5,
 _base_grid_sizes: List[float] = _DEFAULT_GRID_SIZES.copy()
 _settings: Dict[str, str] = {"unit": "m"}
 
-# Configurable server URL (falls back to localhost or environment variable)
-_server_url: str = os.getenv("ROOMRUBIKSPACK_SERVER_URL", "http://127.0.0.1:8000").rstrip('/')
+# Configurable server URL (falls back to live Cloud Run or environment variable)
+_server_url: str = os.getenv("ROOMRUBIKSPACK_SERVER_URL", "https://roomrubikspack-0-1-0-private-942524616275.asia-south1.run.app").rstrip('/')
 
 
 def deserialize_door(d: Dict[str, Any]) -> Door:

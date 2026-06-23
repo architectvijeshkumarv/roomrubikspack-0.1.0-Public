@@ -33,9 +33,9 @@ pip install -e .
 
 ## Configuring the Server Connection
 
-By default, the client library will look for a local API server running at `http://127.0.0.1:8000`. 
+By default, the client library will look for your live API server running at `https://roomrubikspack-0-1-0-private-942524616275.asia-south1.run.app`. 
 
-You can point to a remote server (e.g. hosted on Google Cloud Run) in two ways:
+You can point to a different server endpoint in two ways:
 
 ### 1. In Python Code (Recommended)
 Set the URL dynamically via `rr.settings()`:
@@ -43,20 +43,20 @@ Set the URL dynamically via `rr.settings()`:
 import roomrubikspack as rr
 
 rr.init()
-rr.settings(server_url="https://roomrubikspack-api-xxxxx-uc.a.run.app")
+rr.settings(server_url="https://roomrubikspack-0-1-0-private-942524616275.asia-south1.run.app")
 ```
 
 ### 2. Via Environment Variable
 Before running your script, set the `ROOMRUBIKSPACK_SERVER_URL` environment variable:
 ```bash
 # Windows PowerShell
-$env:ROOMRUBIKSPACK_SERVER_URL="https://roomrubikspack-api-xxxxx-uc.a.run.app"
+$env:ROOMRUBIKSPACK_SERVER_URL="https://roomrubikspack-0-1-0-private-942524616275.asia-south1.run.app"
 
 # Windows Command Prompt
-set ROOMRUBIKSPACK_SERVER_URL=https://roomrubikspack-api-xxxxx-uc.a.run.app
+set ROOMRUBIKSPACK_SERVER_URL=https://roomrubikspack-0-1-0-private-942524616275.asia-south1.run.app
 
 # Linux/macOS
-export ROOMRUBIKSPACK_SERVER_URL="https://roomrubikspack-api-xxxxx-uc.a.run.app"
+export ROOMRUBIKSPACK_SERVER_URL="https://roomrubikspack-0-1-0-private-942524616275.asia-south1.run.app"
 ```
 
 ---
@@ -71,8 +71,8 @@ import roomrubikspack as rr
 # Initialize session
 rr.init()
 
-# Configure the server (defaults to http://127.0.0.1:8000 if omitted)
-rr.settings(unit="m", server_url="http://127.0.0.1:8000")
+# Configure the server (defaults to your live Cloud Run URL if omitted)
+rr.settings(unit="m", server_url="https://roomrubikspack-0-1-0-private-942524616275.asia-south1.run.app")
 
 # Define Rooms
 rr.room("living",   "Living Room",  area=20.0, startSpace=True)
