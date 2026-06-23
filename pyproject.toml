@@ -21,8 +21,8 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/roomrubikspack"
-"Bug Tracker" = "https://github.com/yourusername/roomrubikspack/issues"
+Homepage = "https://github.com/architectvijeshkumarv/roomrubikspack-0.1.0-Public"
+"Bug Tracker" = "https://github.com/architectvijeshkumarv/roomrubikspack-0.1.0-Public/issues"
 
 [project.optional-dependencies]
 dev = [

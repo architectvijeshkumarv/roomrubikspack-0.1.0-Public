@@ -1,5 +1,12 @@
 # RoomRubiksPack (Client Library)
 
+[![PyPI version](https://badge.fury.io/py/roomrubikspack.svg)](https://pypi.org/project/roomrubikspack/)
+[![GitHub repo](https://img.shields.io/badge/GitHub-Repository-blue.svg)](https://github.com/architectvijeshkumarv/roomrubikspack-0.1.0-Public/tree/main)
+
+**Links:**
+- **PyPI:** [https://pypi.org/project/roomrubikspack/](https://pypi.org/project/roomrubikspack/)
+- **GitHub:** [https://github.com/architectvijeshkumarv/roomrubikspack-0.1.0-Public/tree/main](https://github.com/architectvijeshkumarv/roomrubikspack-0.1.0-Public/tree/main)
+
 RoomRubiksPack is a lightweight Python package for generating architectural floorplan layouts using procedural generation and an Elitist Genetic Algorithm. 
 
 This client library maintains a local, stateful API for creating room models, local graphing/connectivity check, local plotting/visualisation via `matplotlib`, and local CAD exports via `ezdxf`. The computationally heavy layout generation (GA) and auto-dimensioning are offloaded to a RoomRubiks API Server.
@@ -16,7 +23,7 @@ pip install roomrubikspack
 
 ### Option 2: Install from GitHub
 ```bash
-pip install git+https://github.com/yourusername/roomrubikspack.git
+pip install git+https://github.com/architectvijeshkumarv/roomrubikspack-0.1.0-Public.git
 ```
 
 ### Option 3: Local Installation (After Downloading)
