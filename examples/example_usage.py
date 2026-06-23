@@ -35,10 +35,11 @@ def main():
     rr.constraint("area", None, 120)
     rr.constraint("perimeter", None, "minimize")
 
-    # 8. Generate dimensions for rooms that only have an area defined (calls server)
+    # 8. Request baseline dimensions from the server (optional, GA will dynamically explore dimensions within area bounds)
     rr.dimensiongen(avar=0.10, mar=1.5)
 
     # 9. Generate layout variations using the Genetic Algorithm (calls server)
+    # The engine will dynamically explore different grid-snapped dimension permutations for rooms defined by area!
     rr.generatelayout(lvar=0.5, sgap=1.0, max_variations=5)
 
     # 10. (Optional) Show the layout visually (customizing labels: name, id, dim, area)
