@@ -1,11 +1,7 @@
 import roomrubikspack as rr
 
 def main():
-    # 1. Initialize a new session
-    rr.init()
-
-    # 2. Set global settings and local/remote server endpoint
-    rr.settings(unit="m", server_url="https://roomrubikspack-0-1-0-private-942524616275.asia-south1.run.app")
+    # Initialization and server endpoint are configured by default in the package
 
     # 3. View or modify the construction grid (used by dimension generation)
     # The grid uses standard architectural modules. You can add or remove values.
