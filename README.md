@@ -108,10 +108,17 @@ rr.constraint("perimeter", None, "minimize")
 # Generate sizes for rooms missing width/height
 rr.dimensiongen()
 
-# Generate layout variations (sent to the server engine)
+# Generate baseline layout variations (sent to the server engine)
 rr.generatelayout()
 
 # View first variation locally
+rr.showlayout(n=1, label=["name", "dim", "area"])
+
+# DEEP REFINEMENT: Tell the GA to deeply optimize the topological shape of Rank 1
+# This extracts the shape of Rank 1 and strictly limits a 45-second deep GA search to that topology!
+rr.generatelayout(selv=1)
+
+# View the highly-optimized, mathematically clamped variation
 rr.showlayout(n=1, label=["name", "dim", "area"])
 
 # Export layout to DXF locally
@@ -134,7 +141,7 @@ rr.wait_for_plots()
 - `rr.connectivityshow()`: Opens a Matplotlib window showing the adjacency graph.
 - `rr.constraint(type, room_id, value)`: Registers a layout constraint.
 - `rr.dimensiongen(avar, mar)`: Requests standard room dimensions from the server.
-- `rr.generatelayout(lvar, sgap, max_variations)`: Sends session state to the server to run the GA layout engine.
+- `rr.generatelayout(lvar, sgap, max_variations, selv)`: Sends session state to the server to run the GA layout engine. Pass `selv=N` to perform a deep refinement search on the topological shape of the N-th variation.
 - `rr.showlayout(n, label)`: Plots the `n`-th generated variation using Matplotlib.
 - `rr.exportlayout(n, filepath)`: Saves the `n`-th layout to JSON or DXF.
 - `rr.wait_for_plots()`: Helper to keep visual plots open.

@@ -27,6 +27,33 @@ def deserialize_room(r: Dict[str, Any]) -> Room:
     return Room(**filtered_data)
 
 
+def _union_area(rooms) -> float:
+    """
+    Computes the true union area of all axis-aligned room rectangles.
+    Uses a coordinate-compression sweep to avoid double-counting
+    attached rooms that are geometrically inside their parent room.
+    """
+    rects = [(r.x, r.y, r.x + r.w, r.y + r.h) for r in rooms if r.w and r.h]
+    if not rects:
+        return 0.0
+
+    # Collect all unique X coordinates and sort them
+    xs = sorted(set(x for x0, _, x1, _ in rects for x in (x0, x1)))
+    # Collect all unique Y coordinates and sort them
+    ys = sorted(set(y for _, y0, _, y1 in rects for y in (y0, y1)))
+
+    total = 0.0
+    for i in range(len(xs) - 1):
+        for j in range(len(ys) - 1):
+            cx = (xs[i] + xs[i + 1]) / 2  # Centre of this cell
+            cy = (ys[j] + ys[j + 1]) / 2
+            # If ANY room covers this cell, count it exactly once
+            covered = any(x0 <= cx <= x1 and y0 <= cy <= y1 for x0, y0, x1, y1 in rects)
+            if covered:
+                total += (xs[i + 1] - xs[i]) * (ys[j + 1] - ys[j])
+    return round(total, 1)
+
+
 def init():
     """Initializes a new session/project (clears any existing state)."""
     global _rooms, _connections, _site, _layout_variations, _base_grid_sizes
@@ -205,7 +232,7 @@ def dimensiongen(avar: float = 0.10, mar: float = 1.5):
     return saved_dimensions
 
 
-def generatelayout(lvar: float = 0.5, sgap: float = 1.0, max_variations: int = 10, liked_layouts: Optional[List[Any]] = None):
+def generatelayout(lvar: float = 0.5, sgap: float = 1.0, max_variations: int = 10, liked_layouts: Optional[List[Any]] = None, selv: Optional[int] = None):
     """Generates the architectural layouts using the server-side Elitist Genetic Algorithm."""
     global _rooms, _connections, _site, _settings, _layout_variations, _server_url
     print(f"Generating layout on server ({_server_url}) with location_variation={lvar}, allowed_space_gap={sgap}...")
@@ -226,6 +253,14 @@ def generatelayout(lvar: float = 0.5, sgap: float = 1.0, max_variations: int = 1
         "allowed_space_gap": sgap,
         "max_variations": max_variations
     }
+    
+    if selv is not None:
+        if not _layout_variations or selv < 1 or selv > len(_layout_variations):
+            print(f"Error: selv={selv} is invalid. Please generate layouts first.")
+            return []
+        target_layout = _layout_variations[selv - 1]["layout"]
+        payload["target_topology_layout"] = [dataclasses.asdict(r) for r in target_layout]
+        print(f"Refining topology of Rank {selv} variation with a deep search...")
     
     try:
         response = requests.post(f"{_server_url}/generatelayout", json=payload, timeout=60)
@@ -248,8 +283,8 @@ def generatelayout(lvar: float = 0.5, sgap: float = 1.0, max_variations: int = 1
         print(f"Successfully generated {len(variations)} unique variations (ranked best to worst).")
         for i, var in enumerate(variations):
             var_rooms = var["layout"]
-            total_area = sum(round(r.w * r.h, 1) if r.w and r.h else 0.0 for r in var_rooms)
-            print(f"Rank {i+1} Variation - Score: {round(var['score'], 1)} - Total Area: {round(total_area, 1)} m²")
+            total_area = _union_area(var_rooms)
+            print(f"Rank {i+1} Variation - Score: {round(var['score'], 1)} - Total Area: {total_area} m²")
         
     # Print the server's status/fitting report
     status_report = data.get("status_report", "")
@@ -287,7 +322,7 @@ def showlayout(n: int = 1, label: Optional[List[str]] = None):
     if label is None:
         label = ["name"]
         
-    total_area = 0.0
+    total_area = _union_area(layout)
     for r in layout:
         color = getattr(r, 'color', '#ffffff')
         rect = patches.Rectangle((r.x, r.y), r.w, r.h, linewidth=1, edgecolor='black', facecolor=color, alpha=0.8)
@@ -297,7 +332,6 @@ def showlayout(n: int = 1, label: Optional[List[str]] = None):
         sq_unit_str = "sq.m" if _settings["unit"] == "m" else "sq.ft"
         
         calc_area = round(r.w * r.h, 1) if r.w and r.h else 0.0
-        total_area += calc_area
         
         if "name" in label:
             label_parts.append(r.name or r.id)

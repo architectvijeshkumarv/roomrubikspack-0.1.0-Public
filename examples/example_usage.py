@@ -38,14 +38,22 @@ def main():
     # 8. Request baseline dimensions from the server (optional, GA will dynamically explore dimensions within area bounds)
     rr.dimensiongen(avar=0.10, mar=1.5)
 
-    # 9. Generate layout variations using the Genetic Algorithm (calls server)
-    # The engine will dynamically explore different grid-snapped dimension permutations for rooms defined by area!
+    # 9. Generate baseline layout variations using the Genetic Algorithm (calls server)
+    # The engine dynamically explores different grid-snapped dimension permutations and topological shapes
     rr.generatelayout(lvar=0.5, sgap=1.0, max_variations=5)
 
-    # 10. (Optional) Show the layout visually (customizing labels: name, id, dim, area)
+    # 10. Show the baseline layout visually (customizing labels: name, id, dim, area)
     rr.showlayout(n=1, label=["name", "id", "dim", "area"])
 
-    # 11. (Optional) Export the layout
+    # 11. (NEW) Deep Refinement Search (Explore then Exploit)
+    # By passing selv=1, the engine will extract the exact topological shape of Rank 1 from the
+    # previous generation, and perform a deep 45-second optimization locked strictly to that shape!
+    rr.generatelayout(lvar=0.5, sgap=1.0, max_variations=5, selv=1)
+    
+    # Show the mathematically refined layout
+    rr.showlayout(n=1, label=["name", "id", "dim", "area"])
+
+    # 12. (Optional) Export the layout
     rr.exportlayout(n=1, filepath="output_layout.json")
     rr.exportlayout(n=1, filepath="output_layout.dxf")
 
