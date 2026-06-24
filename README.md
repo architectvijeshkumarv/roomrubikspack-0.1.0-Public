@@ -128,6 +128,16 @@ rr.exportlayout(n=1, filepath="output_layout.dxf")
 rr.wait_for_plots()
 ```
 
+### Example Visualizations
+
+When you run the script above, you can use the built-in visualisation functions to plot the network graph and the generated floorplan layout using Matplotlib.
+
+**Connectivity Network Diagram (`rr.connectivityshow()`)**
+![Network Diagram](docs/images/network.png)
+
+**Generated Floorplan Layout (`rr.showlayout()`)**
+![Generated Layout](docs/images/layout.png)
+
 ---
 
 ## API Reference

@@ -112,8 +112,8 @@ def connectivity(*conn_pairs: Tuple[str, str]):
         print("WARNING: The provided connectivity graph is non-planar.")
 
 
-def connectivityshow():
-    """Shows a matplotlib network diagram of the registered connectivity."""
+def connectivityshow(filepath: Optional[str] = None):
+    """Shows a matplotlib network diagram of the registered connectivity. If filepath is provided, saves to disk instead of showing UI."""
     global _connections, _rooms
     if not _rooms or not _connections:
         print("No rooms or connections registered to show.")
@@ -141,7 +141,13 @@ def connectivityshow():
     plt.figure(figsize=(8, 6))
     nx.draw(G, pos, labels=labels, node_color=colors, with_labels=True, node_size=2000, font_size=10, font_weight="bold", edge_color="gray")
     plt.title("Connectivity Network Diagram")
-    plt.show(block=False)
+    
+    if filepath:
+        plt.savefig(filepath, dpi=300, bbox_inches='tight')
+        print(f"Network diagram saved to {filepath}")
+        plt.close()
+    else:
+        plt.show(block=False)
 
 
 def site(points: List[Dict[str, float]]):
@@ -294,8 +300,12 @@ def generatelayout(lvar: float = 0.5, sgap: float = 1.0, max_variations: int = 1
     return variations
 
 
-def showlayout(n: int = 1, label: Optional[List[str]] = None):
-    """Shows a matplotlib plot of the n-th layout variation."""
+def showlayout(n: int = 1, label: Optional[List[str]] = None, filepath: Optional[str] = None):
+    """
+    Shows the n-th generated layout variation using Matplotlib.
+    Optional label list configures text: ['name', 'id', 'dim', 'area']
+    If filepath is provided, saves the image to disk.
+    """
     global _layout_variations
     if not _layout_variations or n < 1 or n > len(_layout_variations):
         print(f"Variation {n} does not exist. Available variations: {len(_layout_variations)}")
