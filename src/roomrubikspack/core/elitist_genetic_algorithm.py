@@ -102,7 +102,30 @@ class ElitistGeneticAlgorithm:
             if gap_y <= 0.1 and overlap_x >= min_overlap - 0.1: continue
 
             return False
+            
+        # Check global area overlap (prevent unconnected rooms from swallowing each other)
+        total_area = sum(getattr(r, 'w', 0) * getattr(r, 'h', 0) for r in layout if getattr(r, 'w', None) and getattr(r, 'h', None))
+        union_area = self._compute_union_area(layout)
+        
+        # Tolerate small wall overlaps/snapping, but reject large spatial intersections
+        if total_area - union_area > 1.5:
+            return False
+            
         return True
+
+    def _compute_union_area(self, layout: List[Any]) -> float:
+        rects = [(getattr(r, 'x', 0), getattr(r, 'y', 0), getattr(r, 'x', 0) + getattr(r, 'w', 0), getattr(r, 'y', 0) + getattr(r, 'h', 0)) for r in layout if getattr(r, 'w', None) and getattr(r, 'h', None)]
+        if not rects: return 0.0
+        xs = sorted(set(x for x0, y0, x1, y1 in rects for x in (x0, x1)))
+        ys = sorted(set(y for x0, y0, x1, y1 in rects for y in (y0, y1)))
+        total = 0.0
+        for i in range(len(xs) - 1):
+            for j in range(len(ys) - 1):
+                cx = (xs[i] + xs[i + 1]) / 2
+                cy = (ys[j] + ys[j + 1]) / 2
+                if any(x0 <= cx <= x1 and y0 <= cy <= y1 for x0, y0, x1, y1 in rects):
+                    total += (xs[i + 1] - xs[i]) * (ys[j + 1] - ys[j])
+        return total
 
     def _calculate_score(self, layout: List[Any]) -> float:
         """
@@ -267,9 +290,6 @@ class ElitistGeneticAlgorithm:
         
         target_layout = self.settings.get("target_topology_layout")
         target_topo_sig = self._compute_topo_sig(target_layout) if target_layout else None
-        
-        if target_topo_sig:
-            self.max_generations *= 5  # Deep search for strict topological match
             
         population = self._initialize_population(target_topo_sig)
 

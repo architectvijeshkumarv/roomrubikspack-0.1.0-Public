@@ -12,8 +12,24 @@ Users interact with this module using the `rr.*` namespace (e.g., `rr.room()`, `
 from typing import List, Dict, Tuple, Optional, Any
 import json
 import dataclasses
-
+import math
 import os
+
+def calculate_ga_parameters(max_variations: int, selv: int = 0):
+    base_pop = int(50 + (30 * math.log2(max_variations + 1)))
+    base_gen = int(10 + (5 * math.log10(max_variations + 1)))
+    
+    if selv > 0:
+        population_size = int(base_pop * 0.6)
+        generations = int(base_gen * 5.0)
+    else:
+        population_size = base_pop
+        generations = base_gen
+        
+    population_size = min(population_size, 500)
+    generations = min(generations, 150)
+    
+    return population_size, generations
 
 from .types import Room, Connection, Site
 from .utils.graph_utils import check_planarity
@@ -253,10 +269,6 @@ def dimensiongen(avar: float = 0.10, mar: float = 1.5):
     return saved_dimensions
 
 
-def _union_area(rooms: List[Any]) -> float:
-    """Calculates the footprint union area."""
-    # ... placeholder or simple implementation ...
-    return sum([r.w * r.h for r in rooms if hasattr(r, 'w') and hasattr(r, 'h') and r.w and r.h])
 
 def generatelayout(lvar: float = 0.5, sgap: float = 1.0, max_variations: int = 10, liked_layouts: Optional[List[Any]] = None, selv: Optional[int] = None):
     """Generates the architectural layouts using the local Elitist Genetic Algorithm."""
@@ -287,13 +299,17 @@ def generatelayout(lvar: float = 0.5, sgap: float = 1.0, max_variations: int = 1
 
     # Initialize GA Engine Locally
     site_points = getattr(_site, 'points', None) if _site else None
+    
+    # Calculate parameters dynamically
+    pop_size, gen_count = calculate_ga_parameters(max_variations, selv if selv is not None else 0)
+    
     ga = ElitistGeneticAlgorithm(
         rooms=_rooms,
         connections=_connections,
         settings=gen_settings,
         start_room_id=start_room_id,
-        pop_size=20,
-        max_generations=15,
+        pop_size=pop_size,
+        max_generations=gen_count,
         constraints=_global_constraints,
         site_points=site_points
     )
