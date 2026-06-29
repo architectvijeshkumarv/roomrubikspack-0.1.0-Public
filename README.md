@@ -106,16 +106,16 @@ rr.wait_for_plots()
 When you run the script above, you can use the built-in visualisation functions to plot the network graph and the generated floorplan layout using Matplotlib.
 
 **1. Connectivity Network Diagram** (`rr.connectivityshow()`)
-![Network Diagram](https://raw.githubusercontent.com/architectvijeshkumarv/roomrubiks/master/docs/images/1_network_diagram.png)
+![Network Diagram](https://raw.githubusercontent.com/architectvijeshkumarv/roomrubikspack-0.1.0-Public/main/docs/images/1_network_diagram.png)
 
 **2. Layout with Position Constraint (Vastu Off)**
-![Position Constraint](https://raw.githubusercontent.com/architectvijeshkumarv/roomrubiks/master/docs/images/2_position_constraint_result.png)
+![Position Constraint](https://raw.githubusercontent.com/architectvijeshkumarv/roomrubikspack-0.1.0-Public/main/docs/images/2_position_constraint_result.png)
 
 **3. Layout with Vastu Compliance Engine (No hard constraints needed)**
-![Vastu Layout](https://raw.githubusercontent.com/architectvijeshkumarv/roomrubiks/master/docs/images/3_vastu_result.png)
+![Vastu Layout](https://raw.githubusercontent.com/architectvijeshkumarv/roomrubikspack-0.1.0-Public/main/docs/images/3_vastu_result.png)
 
 **4. Generated Layout with Overlaid Connectivity Network** (`shownetwork=True`)
-![Layout with Network](https://raw.githubusercontent.com/architectvijeshkumarv/roomrubiks/master/docs/images/4_layout_with_network.png)
+![Layout with Network](https://raw.githubusercontent.com/architectvijeshkumarv/roomrubikspack-0.1.0-Public/main/docs/images/4_layout_with_network.png)
 
 ---
 
