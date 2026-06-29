@@ -1,11 +1,11 @@
 # RoomRubiksPack (Client Library)
 
 [![PyPI version](https://badge.fury.io/py/roomrubikspack.svg)](https://pypi.org/project/roomrubikspack/)
-[![GitHub repo](https://img.shields.io/badge/GitHub-Repository-blue.svg)](https://github.com/architectvijeshkumarv/roomrubiks)
+[![GitHub repo](https://img.shields.io/badge/GitHub-Repository-blue.svg)](https://github.com/architectvijeshkumarv/roomrubikspack-0.1.0-Public)
 
 **Links:**
 - **PyPI:** [https://pypi.org/project/roomrubikspack/](https://pypi.org/project/roomrubikspack/)
-- **GitHub:** [https://github.com/architectvijeshkumarv/roomrubiks](https://github.com/architectvijeshkumarv/roomrubiks)
+- **GitHub:** [https://github.com/architectvijeshkumarv/roomrubikspack-0.1.0-Public](https://github.com/architectvijeshkumarv/roomrubikspack-0.1.0-Public)
 
 **RoomRubiksPack** is a powerful procedural architectural floorplan layout generator package. It optimizes room placement, wall snapping, checks for non-overlapping areas, and inherently supports **Vastu compliance** while respecting predefined connectivity and topological constraints.
 
@@ -23,7 +23,7 @@ pip install roomrubikspack
 
 ### Option 2: Install from GitHub
 ```bash
-pip install git+https://github.com/architectvijeshkumarv/roomrubiks.git
+pip install git+https://github.com/architectvijeshkumarv/roomrubikspack-0.1.0-Public.git
 ```
 
 ### Option 3: Local Installation (After Downloading)
