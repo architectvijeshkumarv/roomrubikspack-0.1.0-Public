@@ -1,15 +1,15 @@
 # RoomRubiksPack (Client Library)
 
 [![PyPI version](https://badge.fury.io/py/roomrubikspack.svg)](https://pypi.org/project/roomrubikspack/)
-[![GitHub repo](https://img.shields.io/badge/GitHub-Repository-blue.svg)](https://github.com/architectvijeshkumarv/roomrubikspack-0.1.0-Public/tree/main)
+[![GitHub repo](https://img.shields.io/badge/GitHub-Repository-blue.svg)](https://github.com/architectvijeshkumarv/roomrubiks)
 
 **Links:**
 - **PyPI:** [https://pypi.org/project/roomrubikspack/](https://pypi.org/project/roomrubikspack/)
-- **GitHub:** [https://github.com/architectvijeshkumarv/roomrubikspack-0.1.0-Public/tree/main](https://github.com/architectvijeshkumarv/roomrubikspack-0.1.0-Public/tree/main)
+- **GitHub:** [https://github.com/architectvijeshkumarv/roomrubiks](https://github.com/architectvijeshkumarv/roomrubiks)
 
-RoomRubiksPack is a lightweight Python package for generating architectural floorplan layouts using procedural generation and an Elitist Genetic Algorithm. 
+**RoomRubiksPack** is a powerful procedural architectural floorplan layout generator package. It optimizes room placement, wall snapping, checks for non-overlapping areas, and inherently supports **Vastu compliance** while respecting predefined connectivity and topological constraints.
 
-This client library maintains a local, stateful API for creating room models, local graphing/connectivity check, local plotting/visualisation via `matplotlib`, and local CAD exports via `ezdxf`. The computationally heavy layout generation (GA) and auto-dimensioning are offloaded to a RoomRubiks API Server.
+This unified version is 100% offline and runs its Elitist Genetic Algorithm entirely on your local machine—no server setup required!
 
 ---
 
@@ -23,7 +23,7 @@ pip install roomrubikspack
 
 ### Option 2: Install from GitHub
 ```bash
-pip install git+https://github.com/architectvijeshkumarv/roomrubikspack-0.1.0-Public.git
+pip install git+https://github.com/architectvijeshkumarv/roomrubiks.git
 ```
 
 ### Option 3: Local Installation (After Downloading)
@@ -38,48 +38,18 @@ pip install -e .
 
 ---
 
-## Configuring the Server Connection
-
-By default, the client library will look for your live API server running at `https://roomrubikspack-0-1-0-private-942524616275.asia-south1.run.app`. 
-
-You can point to a different server endpoint in two ways:
-
-### 1. In Python Code (Recommended)
-Set the URL dynamically via `rr.settings()`:
-```python
-import roomrubikspack as rr
-
-rr.init()
-rr.settings(server_url="https://roomrubikspack-0-1-0-private-942524616275.asia-south1.run.app")
-```
-
-### 2. Via Environment Variable
-Before running your script, set the `ROOMRUBIKSPACK_SERVER_URL` environment variable:
-```bash
-# Windows PowerShell
-$env:ROOMRUBIKSPACK_SERVER_URL="https://roomrubikspack-0-1-0-private-942524616275.asia-south1.run.app"
-
-# Windows Command Prompt
-set ROOMRUBIKSPACK_SERVER_URL=https://roomrubikspack-0-1-0-private-942524616275.asia-south1.run.app
-
-# Linux/macOS
-export ROOMRUBIKSPACK_SERVER_URL="https://roomrubikspack-0-1-0-private-942524616275.asia-south1.run.app"
-```
-
----
-
 ## Quick Start
 
-Here is a complete example. Make sure your local or remote RoomRubiks server is running before executing this script.
+### 1. Initialization and Settings
 
 ```python
 import roomrubikspack as rr
 
-# Initialize session
+# Initialize a new session/project
 rr.init()
 
-# Configure the server (defaults to your live Cloud Run URL if omitted)
-rr.settings(unit="m", server_url="https://roomrubikspack-0-1-0-private-942524616275.asia-south1.run.app")
+# Set global preferences (unit: 'm' or 'ft')
+rr.settings(unit="m")
 
 # Define Rooms
 rr.room("living",   "Living Room",  area=20.0, startSpace=True)
@@ -97,6 +67,9 @@ rr.connectivity(
     ("bed1",   "bath1")
 )
 
+# Enable Vastu compliance (inherently supported)
+rr.vastu(True)
+
 # Optional: Draw connectivity graph locally
 rr.connectivityshow()
 
@@ -112,14 +85,14 @@ rr.dimensiongen()
 rr.generatelayout()
 
 # View first variation locally
-rr.showlayout(n=1, label=["name", "dim", "area"])
+rr.showlayout(n=1, label=["name", "dim", "area", "vastu"])
 
 # DEEP REFINEMENT: Tell the GA to deeply optimize the topological shape of Rank 1
 # This extracts the shape of Rank 1 and strictly limits a 45-second deep GA search to that topology!
 rr.generatelayout(selv=1)
 
 # View the highly-optimized, mathematically clamped variation
-rr.showlayout(n=1, label=["name", "dim", "area"])
+rr.showlayout(n=1, label=["name", "dim", "area", "vastu"])
 
 # Export layout to DXF locally
 rr.exportlayout(n=1, filepath="output_layout.dxf")
@@ -132,11 +105,17 @@ rr.wait_for_plots()
 
 When you run the script above, you can use the built-in visualisation functions to plot the network graph and the generated floorplan layout using Matplotlib.
 
-**Connectivity Network Diagram (`rr.connectivityshow()`)**
-![Network Diagram](docs/images/network.png)
+**1. Connectivity Network Diagram** (`rr.connectivityshow()`)
+![Network Diagram](https://raw.githubusercontent.com/architectvijeshkumarv/roomrubiks/master/docs/images/1_network_diagram.png)
 
-**Generated Floorplan Layout (`rr.showlayout()`)**
-![Generated Layout](docs/images/layout.png)
+**2. Layout with Position Constraint (Vastu Off)**
+![Position Constraint](https://raw.githubusercontent.com/architectvijeshkumarv/roomrubiks/master/docs/images/2_position_constraint_result.png)
+
+**3. Layout with Vastu Compliance Engine (No hard constraints needed)**
+![Vastu Layout](https://raw.githubusercontent.com/architectvijeshkumarv/roomrubiks/master/docs/images/3_vastu_result.png)
+
+**4. Generated Layout with Overlaid Connectivity Network** (`shownetwork=True`)
+![Layout with Network](https://raw.githubusercontent.com/architectvijeshkumarv/roomrubiks/master/docs/images/4_layout_with_network.png)
 
 ---
 
@@ -147,6 +126,7 @@ When you run the script above, you can use the built-in visualisation functions 
 - `rr.constructiongrid(add, remove, reset)`: View or manipulate the base construction grid sizes locally.
 - `rr.room(id, name, w, h, area, startSpace, attachedSpace, ...)`: Register a room.
 - `rr.site(points)`: Set an optional site boundary polygon.
+- `rr.vastu(keep: bool)`: Enable or disable Vastu Shastra rules during generation.
 - `rr.connectivity(*pairs)`: Define room connections. Planarity check runs instantly on the client.
 - `rr.connectivityshow()`: Opens a Matplotlib window showing the adjacency graph.
 - `rr.constraint(type, room_id, value)`: Registers a layout constraint.
@@ -178,3 +158,7 @@ Valiyappurakkal, V. K. (2026). RoomRubiks: An Application for Floor Layout Gener
   url     = {https://doi.org/10.1061/JAEIED.AEENG-2207}
 }
 ```
+
+## Support and Discussions
+
+For any questions, bug reports, feature requests, or general discussions regarding RoomRubiks, please visit our [GitHub Discussions page](https://github.com/Vijesh-Kumar-V/roomrubikspack/discussions). We prefer managing all support requests publicly via GitHub rather than email to help the community build a shared knowledge base.

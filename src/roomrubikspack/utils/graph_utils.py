@@ -10,6 +10,15 @@ Responsibilities:
 """
 
 import random
+"""
+roomrubikspack/utils/graph_utils.py
+
+Provides graph theory utilities for analyzing the room connectivity network.
+Currently contains `check_planarity` which uses Euler's formula to determine if
+a given layout network can theoretically be drawn on a 2D plane without edges crossing.
+(If a graph is non-planar, it is physically impossible to construct a single-story 
+floorplan that satisfies all adjacencies without corridors or overlapping).
+"""
 from typing import List, Dict, Optional, Set
 from ..types import Connection
 

@@ -3,8 +3,11 @@ import roomrubikspack as rr
 def main():
     # 1. (Optional) Set the measurement unit to meters ('m') or feet ('f')
     rr.settings(unit="m")
+    
+    # 2. (Optional) Enable Vastu Shastra compliance checks
+    rr.vastu(True)
 
-    # 2. View or modify the construction grid (used by dimension generation)
+    # 3. View or modify the construction grid (used by dimension generation)
     # The grid uses standard architectural modules. You can add or remove values.
     rr.constructiongrid(add=5.0)
     rr.constructiongrid(remove=9.0)
@@ -17,43 +20,47 @@ def main():
     rr.room("bed1",     "Master Bed",   area=16.0, color="#d9d9f2")
     rr.room("bath1",    "Attached Bath", area=4.0, attachedSpace=True, color="#e6f2ff")
 
-    # (Optional) Define a site boundary
+    # 5. (Optional) Define a site boundary (The GA will aggressively pack rooms inside this polygon)
     rr.site([{"x": 0, "y": 0}, {"x": 10, "y": 0}, {"x": 10, "y": 10}, {"x": 0, "y": 10}])
 
-    # 5. Add Connectivity (Adjacency requirements)
+    # 6. Add Connectivity (Adjacency requirements)
     rr.connectivity(
         ("living", "kitchen"),
         ("living", "bed1"),
         ("bed1",   "bath1")
     )
 
-    # 6. (Optional) Show the connectivity graph locally
+    # 7. (Optional) Show the connectivity graph locally
     rr.connectivityshow()
 
-    # 7. Add Soft Constraints for the Genetic Algorithm
+    # 8. Add Soft Constraints for the Genetic Algorithm
     rr.constraint("position", "bed1", "N")
     rr.constraint("area", None, 120)
     rr.constraint("perimeter", None, "minimize")
 
-    # 8. Request baseline dimensions from the server (optional, GA will dynamically explore dimensions within area bounds)
+    # 9. Request baseline dimensions (optional, GA will dynamically explore dimensions within area bounds)
     rr.dimensiongen(avar=0.10, mar=1.5)
 
-    # 9. Generate baseline layout variations using the Genetic Algorithm (calls server)
-    # The engine dynamically explores different grid-snapped dimension permutations and topological shapes
-    rr.generatelayout(lvar=0.5, sgap=1.0, max_variations=5)
+    # 10. Generate Layout (Exploration Phase)
+    # The engine explores various topological graphs and mathematical combinations
+    # lvar controls grid spacing for non-attached rooms (e.g., 0.5 allows half-module shifts)
+    # sgap controls spacing allowance between disconnected rooms (e.g., 1.0m gap limit)
+    rr.generatelayout(lvar=0.5, sgap=1.0, max_variations=10)
 
-    # 10. Show the baseline layout visually (customizing labels: name, id, dim, area)
-    rr.showlayout(n=1, label=["name", "id", "dim", "area"])
-
-    # 11. (NEW) Deep Refinement Search (Explore then Exploit)
-    # By passing selv=1, the engine will extract the exact topological shape of Rank 1 from the
-    # previous generation, and perform a deep 45-second optimization locked strictly to that shape!
+    # 11. Show Results
+    rr.showlayout(1, label=["name", "id", "dim", "area", "vastu"], shownetwork=True)
+    rr.connectivityshow()
+    
+    # 12. Deep Refinement (Exploitation Phase)
+    # Refine a chosen topology (e.g., rank 1) by locking its connectivity graph
+    # and searching specifically for better geometric fits in that signature.
+    print("\n--- Running Deep Refinement on Rank 1 ---")
     rr.generatelayout(lvar=0.5, sgap=1.0, max_variations=5, selv=1)
     
-    # Show the mathematically refined layout
-    rr.showlayout(n=1, label=["name", "id", "dim", "area"])
+    # Show the mathematically refined layout alongside its topological network graph!
+    rr.showlayout(n=1, label=["name", "id", "dim", "area", "vastu"], shownetwork=True)
 
-    # 12. (Optional) Export the layout
+    # 13. (Optional) Export the layout
     rr.exportlayout(n=1, filepath="output_layout.json")
     rr.exportlayout(n=1, filepath="output_layout.dxf")
 

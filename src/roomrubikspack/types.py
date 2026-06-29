@@ -1,8 +1,15 @@
 """
-types.py
+roomrubikspack/types.py
 
-Defines all shared dataclasses (data models) used throughout the package.
-These act as plain data containers — no methods or business logic lives here.
+Defines the core data structures used throughout the layout engine.
+These are primarily implemented as standard Python `dataclasses` to enforce strict
+type checking and maintain a clean schema for serialising/deserialising JSON
+payloads when working with APIs or saving state.
+
+Classes:
+    Room: Represents a single rectangular space in the floorplan.
+    Connection: Represents an adjacency requirement between two rooms.
+    Site: Represents a bounding polygon that constraints the layout.
 """
 
 from dataclasses import dataclass

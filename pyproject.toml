@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "roomrubikspack"
-version = "0.1.6"
+version = "0.2.4"
 authors = [
-    { name = "Vijesh Kumar V", email = "your.email@example.com" }
+    { name = "Vijesh Kumar V" }
 ]
-description = "Client wrapper for procedural architectural floorplan layout generator"
+description = "A powerful, offline procedural floorplan layout generator package optimizing room placement, wall snapping, and Vastu compliance"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.9"
@@ -21,8 +21,8 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/architectvijeshkumarv/roomrubikspack-0.1.0-Public"
-"Bug Tracker" = "https://github.com/architectvijeshkumarv/roomrubikspack-0.1.0-Public/issues"
+Homepage = "https://github.com/architectvijeshkumarv/roomrubiks"
+"Bug Tracker" = "https://github.com/architectvijeshkumarv/roomrubiks/issues"
 
 [project.optional-dependencies]
 dev = [

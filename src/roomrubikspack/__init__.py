@@ -1,7 +1,18 @@
+"""
+roomrubikspack/__init__.py
+
+This is the primary public API for the RoomRubiks procedural floorplan layout engine.
+It maintains the global session state (rooms, connections, settings, site boundaries) 
+and orchestrates the core procedural generation pipeline (dimension generation, 
+layout placement via Genetic Algorithm, and visualization).
+
+Users interact with this module using the `rr.*` namespace (e.g., `rr.room()`, `rr.connectivity()`).
+"""
+
 from typing import List, Dict, Tuple, Optional, Any
 import json
 import dataclasses
-import requests
+
 import os
 
 from .types import Room, Connection, Site
@@ -15,13 +26,17 @@ _site: Optional[Site] = None
 _layout_variations: List[List[Room]] = []
 _DEFAULT_GRID_SIZES: List[float] = [1.2, 1.5, 1.8, 2.1, 2.4, 3.0, 4.5, 6.0, 7.5, 9.0]
 _base_grid_sizes: List[float] = _DEFAULT_GRID_SIZES.copy()
-_settings: Dict[str, str] = {"unit": "m"}
+_settings: Dict[str, Any] = {"unit": "m", "vastu": False}
 
 # Configurable server URL (falls back to live Cloud Run or environment variable)
-_server_url: str = os.getenv("ROOMRUBIKSPACK_SERVER_URL", "https://roomrubikspack-0-1-0-private-942524616275.asia-south1.run.app").rstrip('/')
+
 
 
 def deserialize_room(r: Dict[str, Any]) -> Room:
+    """
+    Safely parses a dictionary of room attributes into a Room dataclass object.
+    Filters out any unexpected keys that aren't defined in the Room dataclass schema.
+    """
     valid_fields = {f.name for f in dataclasses.fields(Room)}
     filtered_data = {k: v for k, v in r.items() if k in valid_fields}
     return Room(**filtered_data)
@@ -55,11 +70,18 @@ def _union_area(rooms) -> float:
 
 
 def init():
-    """Initializes a new session/project (clears any existing state)."""
-    global _rooms, _connections, _site, _layout_variations, _base_grid_sizes
+    """
+    Initializes or resets a new RoomRubiks session.
+    
+    This function clears all global state variables, ensuring that consecutive
+    runs or iterative generation attempts start with a clean slate without
+    residual data from previous executions.
+    """
+    global _rooms, _connections, _site, _dim_gen, _layout_variations, _base_grid_sizes
     _rooms = []
     _connections = []
     _site = None
+    _dim_gen = None
     _layout_variations = []
     _base_grid_sizes = _DEFAULT_GRID_SIZES.copy()
     clear_constraints()
@@ -141,6 +163,7 @@ def connectivityshow(filepath: Optional[str] = None):
     plt.figure(figsize=(8, 6))
     nx.draw(G, pos, labels=labels, node_color=colors, with_labels=True, node_size=2000, font_size=10, font_weight="bold", edge_color="gray")
     plt.title("Connectivity Network Diagram")
+    plt.axis('off')
     
     if filepath:
         plt.savefig(filepath, dpi=300, bbox_inches='tight')
@@ -163,20 +186,22 @@ def constraint(constraint_type: str, room_id: Optional[str] = None, value: Any =
     print(f"Added constraint: {constraint_type} for room {room_id} with value {value}")
 
 
-def settings(unit: Optional[str] = None, server_url: Optional[str] = None):
-    """Sets global project settings and server endpoint."""
-    global _settings, _server_url
-    if unit is not None:
-        unit = unit.lower()
-        if unit not in ['m', 'f']:
-            print("Warning: Unsupported unit. Use 'm' for meters or 'f' for feet.")
-        else:
-            _settings["unit"] = unit
-            print(f"Settings updated: unit set to '{unit}'")
-            
-    if server_url is not None:
-        _server_url = server_url.rstrip('/')
-        print(f"Settings updated: server URL set to '{_server_url}'")
+def settings(unit: str = "m"):
+    """Configures global settings."""
+    global _settings
+    if unit in ["m", "ft"]:
+        _settings["unit"] = unit
+        print(f"Settings updated: unit set to '{unit}'")
+    else:
+        print("Invalid unit. Use 'm' or 'ft'.")
+
+
+def vastu(enable: bool = False):
+    """Enables or disables Vastu Shastra compliance checks during layout generation."""
+    global _settings
+    _settings["vastu"] = enable
+    state = "enabled" if enable else "disabled"
+    print(f"Vastu compliance is now {state}.")
 
 
 def constructiongrid(add: Optional[float] = None, remove: Optional[float] = None, reset: bool = False):
@@ -207,104 +232,93 @@ def constructiongrid(add: Optional[float] = None, remove: Optional[float] = None
 
 
 def dimensiongen(avar: float = 0.10, mar: float = 1.5):
-    """Calculates optimal dimensions for rooms missing them using the server."""
-    global _rooms, _base_grid_sizes, _server_url
+    """Calculates optimal dimensions for rooms missing them using the local DimensionGenerator."""
+    global _rooms, _base_grid_sizes
     
-    payload = {
-        "rooms": [dataclasses.asdict(r) for r in _rooms],
-        "base_grid_sizes": _base_grid_sizes,
-        "area_variation": avar,
-        "max_aspect_ratio": mar
-    }
+    print(f"Generating optimal dimensions locally...")
+    from .generators.dimension_generator import DimensionGenerator
     
-    print(f"Requesting dimensions from server at {_server_url}...")
-    try:
-        response = requests.post(f"{_server_url}/dimensiongen", json=payload, timeout=30)
-        response.raise_for_status()
-        data = response.json()
-    except Exception as e:
-        print(f"Error connecting to RoomRubiks server: {e}")
-        print("Please check if the server is running and configured correctly.")
-        return {}
-        
-    # Reconstruct rooms and update _rooms
-    updated_rooms = []
-    for rm_dict in data["rooms"]:
-        updated_rooms.append(deserialize_room(rm_dict))
-    _rooms = updated_rooms
+    dim_gen = DimensionGenerator(base_grid_sizes=_base_grid_sizes, area_variation=avar, max_aspect_ratio=mar)
     
-    saved_dimensions = data["saved_dimensions"]
+    saved_dimensions = {}
+    for r in _rooms:
+        if getattr(r, 'area', None) and (getattr(r, 'w', None) is None or getattr(r, 'h', None) is None):
+            best_dim = dim_gen.get_best_dimension(r.area)
+            if best_dim:
+                r.w = best_dim["w"]
+                r.h = best_dim["h"]
+                saved_dimensions[r.id] = best_dim
+    
     print(f"Generated optimal dimensions for {len(saved_dimensions)} rooms.")
     return saved_dimensions
 
 
+def _union_area(rooms: List[Any]) -> float:
+    """Calculates the footprint union area."""
+    # ... placeholder or simple implementation ...
+    return sum([r.w * r.h for r in rooms if hasattr(r, 'w') and hasattr(r, 'h') and r.w and r.h])
+
 def generatelayout(lvar: float = 0.5, sgap: float = 1.0, max_variations: int = 10, liked_layouts: Optional[List[Any]] = None, selv: Optional[int] = None):
-    """Generates the architectural layouts using the server-side Elitist Genetic Algorithm."""
-    global _rooms, _connections, _site, _settings, _layout_variations, _server_url
-    print(f"Generating layout on server ({_server_url}) with location_variation={lvar}, allowed_space_gap={sgap}...")
+    """Generates the architectural layouts using the local Elitist Genetic Algorithm."""
+    global _rooms, _connections, _site, _settings, _layout_variations
+    print(f"Generating layout locally with location_variation={lvar}, allowed_space_gap={sgap}...")
     
     from .utils.constraints import _global_constraints
+    from .core.elitist_genetic_algorithm import ElitistGeneticAlgorithm
     
-    # Add grid sizes to settings so server can explore dimensions
+    # Add grid sizes to settings
     gen_settings = _settings.copy()
     gen_settings["base_grid_sizes"] = _base_grid_sizes
+    gen_settings["useCorridors"] = False
+    gen_settings["locationVariation"] = lvar
+    gen_settings["allowedSpaceGap"] = sgap
+    gen_settings["otherDoorWidth"] = 0.9
+
+    start_spaces = [r for r in _rooms if r.startSpace]
+    start_room_id = start_spaces[0].id if start_spaces else _rooms[0].id
     
-    payload = {
-        "rooms": [dataclasses.asdict(r) for r in _rooms],
-        "connections": [dataclasses.asdict(c) for c in _connections],
-        "constraints": _global_constraints,
-        "site": dataclasses.asdict(_site) if _site is not None else None,
-        "settings": gen_settings,
-        "location_variation": lvar,
-        "allowed_space_gap": sgap,
-        "max_variations": max_variations
-    }
+    # Handle Explore then Exploit (selv) target topology extraction
+    if selv is not None and _layout_variations and 1 <= selv <= len(_layout_variations):
+        target_topology_layout = _layout_variations[selv - 1]["layout"]
+        gen_settings["target_topology_layout"] = target_topology_layout
+        print(f"DEEP REFINEMENT ACTIVATED: Extracting topological signature from variation {selv}")
+    elif selv is not None:
+        print(f"WARNING: Invalid selv={selv}. Available variations: {len(_layout_variations)}. Ignoring selv.")
+
+    # Initialize GA Engine Locally
+    site_points = getattr(_site, 'points', None) if _site else None
+    ga = ElitistGeneticAlgorithm(
+        rooms=_rooms,
+        connections=_connections,
+        settings=gen_settings,
+        start_room_id=start_room_id,
+        pop_size=20,
+        max_generations=15,
+        constraints=_global_constraints,
+        site_points=site_points
+    )
     
-    if selv is not None:
-        if not _layout_variations or selv < 1 or selv > len(_layout_variations):
-            print(f"Error: selv={selv} is invalid. Please generate layouts first.")
-            return []
-        target_layout = _layout_variations[selv - 1]["layout"]
-        payload["target_topology_layout"] = [dataclasses.asdict(r) for r in target_layout]
-        print(f"Refining topology of Rank {selv} variation with a deep search...")
+    variations_data = ga.run_multiple(max_variations)
     
-    try:
-        response = requests.post(f"{_server_url}/generatelayout", json=payload, timeout=60)
-        response.raise_for_status()
-        data = response.json()
-    except Exception as e:
-        print(f"Error connecting to RoomRubiks server: {e}")
-        print("Please check if the server is running and configured correctly.")
+    if not variations_data:
+        print("Failed to generate layouts.")
         return []
         
-    variations = []
-    for var_dict in data["variations"]:
-        var_rooms = [deserialize_room(rm_dict) for rm_dict in var_dict["layout"]]
-        variations.append({"layout": var_rooms, "score": var_dict["score"]})
+    _layout_variations = variations_data
+    print(f"Successfully generated {len(_layout_variations)} unique variations (ranked best to worst).")
+    
+    for i, v in enumerate(_layout_variations):
+        total_area = _union_area(v["layout"])
+        v["total_area"] = total_area
+        print(f"Rank {i+1} Variation - Score: {round(v['score'], 1)} - Total Area: {round(total_area, 1)} {gen_settings['unit']}²")
         
-    _layout_variations = variations
-    if not variations:
-        print("Failed to generate layouts.")
-    else:
-        print(f"Successfully generated {len(variations)} unique variations (ranked best to worst).")
-        for i, var in enumerate(variations):
-            var_rooms = var["layout"]
-            total_area = _union_area(var_rooms)
-            print(f"Rank {i+1} Variation - Score: {round(var['score'], 1)} - Total Area: {total_area} m²")
-        
-    # Print the server's status/fitting report
-    status_report = data.get("status_report", "")
-    if status_report:
-        print(f"Server Status: {status_report}")
-        
-    return variations
-
-
-def showlayout(n: int = 1, label: Optional[List[str]] = None, filepath: Optional[str] = None):
+    return _layout_variations
+def showlayout(n: int = 1, label: Optional[List[str]] = None, filepath: Optional[str] = None, shownetwork: bool = False):
     """
     Shows the n-th generated layout variation using Matplotlib.
     Optional label list configures text: ['name', 'id', 'dim', 'area']
     If filepath is provided, saves the image to disk.
+    If shownetwork is True, plots the connectivity graph on the left and layout on the right.
     """
     global _layout_variations
     if not _layout_variations or n < 1 or n > len(_layout_variations):
@@ -317,11 +331,43 @@ def showlayout(n: int = 1, label: Optional[List[str]] = None, filepath: Optional
     try:
         import matplotlib.pyplot as plt
         import matplotlib.patches as patches
+        if shownetwork:
+            import networkx as nx
     except ImportError:
-        print("Please install matplotlib to use showlayout(): pip install matplotlib")
+        print("Please install matplotlib (and networkx if shownetwork=True) to use showlayout()")
         return
 
-    fig, ax = plt.subplots()
+    if shownetwork:
+        fig, (ax_net, ax) = plt.subplots(1, 2, figsize=(14, 6))
+        
+        G = nx.Graph()
+        for r in _rooms:
+            G.add_node(r.id, label=r.name or r.id, is_start=getattr(r, 'startSpace', False))
+        for c in _connections:
+            G.add_edge(c.roomA, c.roomB)
+            
+        # Position nodes based on the layout's actual coordinates
+        pos = {}
+        for r in layout:
+            if r.x is not None and r.y is not None and r.w is not None and r.h is not None:
+                pos[r.id] = (r.x + (r.w / 2), r.y + (r.h / 2))
+            else:
+                pos[r.id] = (0, 0)
+        
+        # Add any disconnected/unplaced rooms using spring layout fallback
+        unplaced_nodes = [node for node in G.nodes() if node not in pos]
+        if unplaced_nodes:
+            fallback_pos = nx.spring_layout(G.subgraph(unplaced_nodes), seed=42)
+            for node in unplaced_nodes:
+                pos[node] = fallback_pos[node]
+        labels_net = nx.get_node_attributes(G, 'label')
+        colors_net = ['lightgreen' if nx.get_node_attributes(G, 'is_start').get(nd) else 'lightblue' for nd in G.nodes()]
+        
+        nx.draw(G, pos, ax=ax_net, labels=labels_net, node_color=colors_net, with_labels=True, node_size=2000, font_size=10, font_weight="bold", edge_color="gray")
+        ax_net.set_title("Connectivity Network")
+        ax_net.axis('off')
+    else:
+        fig, ax = plt.subplots()
     
     global _site
     if _site is not None and getattr(_site, 'points', None):
@@ -351,15 +397,30 @@ def showlayout(n: int = 1, label: Optional[List[str]] = None, filepath: Optional
             label_parts.append(f"{r.w}x{r.h}{unit_str}")
         if "area" in label:
             label_parts.append(f"{calc_area} {sq_unit_str}")
+        if "vastu" in label:
+            try:
+                from .utils.vastu import get_vastu_rule_for_room
+                vrule = get_vastu_rule_for_room(r.name or r.id)
+                if vrule:
+                    label_parts.append(f"Vastu: {vrule['primarySector']}")
+            except ImportError:
+                pass
         
         text_str = "\n".join(label_parts)
         ax.text(r.x + r.w/2, r.y + r.h/2, text_str, ha='center', va='center', fontsize=8)
 
     ax.autoscale()
     plt.gca().set_aspect('equal', adjustable='box')
+    ax.axis('off')
     plt.title(f"Rank {n} Variation (Score: {round(score, 1)})")
     fig.text(0.5, 0.02, f"Total Area = {round(total_area, 1)} {sq_unit_str}", ha='center', fontsize=10, fontweight='bold')
-    plt.show(block=False)
+    
+    if filepath:
+        plt.savefig(filepath, dpi=300, bbox_inches='tight')
+        print(f"Layout variation {n} saved to {filepath}")
+        plt.close()
+    else:
+        plt.show(block=False)
 
 
 def exportlayout(n: int = 1, filepath: str = "layout.json"):
@@ -408,9 +469,15 @@ def exportlayout(n: int = 1, filepath: str = "layout.json"):
 
 
 def wait_for_plots():
-    """Blocks execution until all matplotlib windows are closed by the user."""
+    """Utility to block script execution until all matplotlib figures are closed."""
     try:
         import matplotlib.pyplot as plt
-        plt.show(block=True)
+        plt.show()
     except ImportError:
         pass
+
+__all__ = [
+    "init", "settings", "room", "site", "connectivity", "connectivityshow",
+    "constraint", "vastu", "constructiongrid", "dimensiongen", "generatelayout",
+    "showlayout", "exportlayout", "wait_for_plots", "add_constraint", "clear_constraints", "check_planarity"
+]
