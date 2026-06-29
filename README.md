@@ -9,8 +9,6 @@
 
 **RoomRubiksPack** is a powerful procedural architectural floorplan layout generator package. It optimizes room placement, wall snapping, checks for non-overlapping areas, and inherently supports **Vastu compliance** while respecting predefined connectivity and topological constraints.
 
-This unified version is 100% offline and runs its Elitist Genetic Algorithm entirely on your local machine—no server setup required!
-
 ---
 
 ## Installation
@@ -85,14 +83,14 @@ rr.dimensiongen()
 rr.generatelayout()
 
 # View first variation locally
-rr.showlayout(n=1, label=["name", "dim", "area", "vastu"])
+rr.showlayout(n=1, label=["name", "dim", "area", "vastu"], shownetwork=True)
 
 # DEEP REFINEMENT: Tell the GA to deeply optimize the topological shape of Rank 1
 # This extracts the shape of Rank 1 and strictly limits a 45-second deep GA search to that topology!
 rr.generatelayout(selv=1)
 
 # View the highly-optimized, mathematically clamped variation
-rr.showlayout(n=1, label=["name", "dim", "area", "vastu"])
+rr.showlayout(n=1, label=["name", "dim", "area", "vastu"], shownetwork=True)
 
 # Export layout to DXF locally
 rr.exportlayout(n=1, filepath="output_layout.dxf")
